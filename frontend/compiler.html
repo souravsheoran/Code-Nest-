@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Editor</title>
+    <style>
+        body{
+            background-color:black;
+        }
+        #editor{
+            float: left;
+            color: cyan;
+            width: 70%;
+            height: 500px;
+            border: 1px solid #fdfdfd;
+            
+        }
+        #output {
+            float: right;
+            color: green;
+            width: 25%;
+            height: 250px;
+            border: 1px solid #fcfbfb;
+        }
+        #input{
+            height: 20px;
+            width: 100px;
+            background-color: azure;
+            color: rgb(0, 0, 0);
+            border: 2px #fdfdfd;
+        }
+    </style>
+</head>
+<body>
+    <select id="language">
+        <option value="javascript">JavaScript</option>
+        <option value="python">Python</option>
+        <option value="java">Java</option>
+        <option value="cpp">C++</option>
+        <!-- Add more options for other languages if needed -->
+    </select>
+    <input type="text" id="userInput" placeholder="Input">
+    <button onclick="executeCode()">Run</button> <!-- Run button for executing code -->
+    <button onclick="fetchOutput()">Fetch Output</button> <!-- Button to fetch output -->
+    <h3 id="input">Code Editor</h2>
+    <div id="editor" contenteditable="true"></div>
+    <div id="output"></div>
+
+    <script>
+        const apiUrl = 'http://localhost:8080/api/code/';
+
+        // Function to execute the code and fetch output
+        function executeCode() {
+            const code = document.getElementById('editor').innerText.trim();
+            const language = document.getElementById('language').value;
+            const input = document.getElementById('userInput').value;
+
+            fetch(apiUrl + 'execute', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: `language=${encodeURIComponent(language)}&code=${encodeURIComponent(code)}&input=${encodeURIComponent(input)}`
+            })
+            .then(response => response.text()) // Parse response as text
+            .then(id => {
+                document.getElementById('output').innerText = `Code executed successfully. ID: ${id}`;
+                document.getElementById('output').setAttribute('data-execution-id', id); // Store execution ID
+            })
+            .catch(error => {
+                console.error('Error executing code:', error);
+                document.getElementById('output').innerText = 'Error executing code.';
+            });
+        }
+
+        // Function to fetch output from the database
+        function fetchOutput() {
+            const executionId = document.getElementById('output').getAttribute('data-execution-id');
+            if (!executionId) {
+                console.error('No execution ID available.');
+                document.getElementById('output').innerText = 'No execution ID available.';
+                return;
+            }
+
+            fetch(apiUrl + 'output?id=' + encodeURIComponent(executionId))
+                .then(response => response.text()) // Parse response as text
+                .then(output => {
+                    document.getElementById('output').innerText = output;
+                })
+                .catch(error => {
+                    console.error('Error fetching output:', error);
+                    document.getElementById('output').innerText = 'Error fetching output.';
+                });
+        }
+    </script>
+</body>
+</html>
